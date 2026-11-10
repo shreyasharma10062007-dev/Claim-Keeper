@@ -1,0 +1,220 @@
+/* ClaimKeeper Custom Design System & Print Styles */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-deep: #080C15;
+  --bg-card: #0F172A;
+  --bg-surface: #131F37;
+  --border-subtle: #1E293B;
+  --border-focus: #38BDF8;
+  --cyan-accent: #00E5FF;
+  --cyan-glow: rgba(0, 229, 255, 0.15);
+  --emerald-accent: #10B981;
+  --rose-accent: #F43F5E;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-deep);
+  color: #E2E8F0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Glassmorphism & Glow Utilities */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.glass-panel-elevated {
+  background: rgba(19, 31, 55, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 30px -10px rgba(0, 229, 255, 0.08);
+}
+
+.glow-border:hover {
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 25px -5px rgba(0, 229, 255, 0.15);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+}
+
+/* Subtle background mesh gradient */
+.bg-mesh {
+  background-image: 
+    radial-gradient(at 15% 10%, rgba(0, 229, 255, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 20%, rgba(59, 130, 246, 0.09) 0px, transparent 50%),
+    radial-gradient(at 50% 85%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+}
+
+/* Subtle grid line background */
+.bg-grid-pattern {
+  background-size: 36px 36px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Diff Highlighting */
+.diff-removed {
+  background-color: rgba(244, 63, 94, 0.22);
+  color: #FDA4AF;
+  text-decoration: line-through;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border-left: 3px solid #F43F5E;
+  margin: 1px 0;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.diff-added {
+  background-color: rgba(16, 185, 129, 0.22);
+  color: #6EE7B7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border-left: 3px solid #10B981;
+  margin: 1px 0;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.diff-line-removed {
+  background-color: rgba(244, 63, 94, 0.12);
+  border-left: 3px solid #F43F5E;
+}
+
+.diff-line-added {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-left: 3px solid #10B981;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #080C15;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Animations */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s ease-in-out infinite;
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  min-width: 300px;
+  max-width: 420px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  background-color: rgba(4, 7, 14, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+/* ===================================================
+   PRINT STYLES FOR COURT/BANK/DISPUTE EVIDENCE EXPORT
+   =================================================== */
+@media print {
+  body {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 11pt !important;
+  }
+
+  /* Hide interactive UI elements */
+  nav, header, footer, #toast-container, .no-print, button, .modal-close-btn, .search-container, .brand-quick-chips {
+    display: none !important;
+  }
+
+  /* Show only print dossier container */
+  .print-only-container, #printable-evidence-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    color: #0F172A !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .evidence-report-card {
+    border: 1px solid #CBD5E1 !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  .diff-removed {
+    background-color: #FEE2E2 !important;
+    color: #991B1B !important;
+    border-left: 2px solid #DC2626 !important;
+  }
+
+  .diff-added {
+    background-color: #D1FAE5 !important;
+    color: #065F46 !important;
+    border-left: 2px solid #059669 !important;
+  }
+
+  a {
+    text-decoration: underline !important;
+    color: #1D4ED8 !important;
+  }
+}

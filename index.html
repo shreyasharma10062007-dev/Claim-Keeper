@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClaimKeeper — Policy Versioning & Evidence Tool</title>
+  <meta name="description" content="Capture policy text, store timestamped versions, compare silent changes, and generate evidence reports.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#080C15',
+              card: '#0F172A',
+              surface: '#131F37',
+              cyan: '#00E5FF',
+              emerald: '#10B981',
+              rose: '#F43F5E'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#080C15] text-slate-100 min-h-screen flex flex-col bg-mesh bg-grid-pattern selection:bg-cyan-500/30 selection:text-cyan-200">
+
+  <!-- ========================================== -->
+  <!-- NAVBAR                                     -->
+  <!-- ========================================== -->
+  <nav class="sticky top-0 z-40 glass-panel border-b border-slate-800/80 px-4 sm:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Logo & Tagline -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20">
+          <div class="w-full h-full bg-[#080C15] rounded-[10px] flex items-center justify-center">
+            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+        </div>
+        <div>
+          <span class="text-lg font-black tracking-tight text-white">ClaimKeeper</span>
+          <p class="text-[11px] text-slate-400 font-medium">Keep the Policy. Keep the Proof.</p>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button onclick="openAddModal()" 
+              class="px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-1.5 active:scale-95">
+        <svg class="w-4 h-4 text-slate-950 font-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        <span>Track New Policy</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- TOOL HEADER & PRESETS                      -->
+  <!-- ========================================== -->
+  <header class="pt-8 pb-4 px-4 sm:px-8 max-w-7xl mx-auto w-full">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Consumer Policy Monitor & Diff Tool</h1>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">
+          Archiving timestamped policy wording, cryptographic hashes, and generating dispute evidence reports.
+        </p>
+      </div>
+
+      <!-- Live Counters -->
+      <div class="flex items-center gap-2">
+        <div class="bg-slate-900/80 border border-slate-800 px-3.5 py-1.5 rounded-xl text-center">
+          <div class="text-[10px] uppercase font-mono text-slate-500">Tracked Policies</div>
+          <div class="text-base font-black text-cyan-400" id="stat-total-policies">6</div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-800 px-3.5 py-1.5 rounded-xl text-center">
+          <div class="text-[10px] uppercase font-mono text-slate-500">Changes Detected</div>
+          <div class="text-base font-black text-amber-400" id="stat-changes-detected">6</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Track Popular Brand Chips -->
+    <div class="flex items-center gap-2 pt-4 overflow-x-auto pb-1 scrollbar-none">
+      <span class="text-xs font-semibold text-slate-400 flex-shrink-0">Quick Track:</span>
+      <div id="quick-presets-container" class="flex items-center gap-2">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE                             -->
+  <!-- ========================================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-8 py-6 w-full flex-1" id="dashboard-section">
+    
+    <!-- Search & Filter Controls -->
+    <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-6">
+      
+      <!-- Search Input -->
+      <div class="relative flex-1 max-w-md">
+        <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="search-input" 
+               placeholder="Search by brand (e.g. Adidas, Nike, Netflix) or policy title..." 
+               class="w-full bg-slate-900/90 border border-slate-800 focus:border-cyan-500 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 outline-none transition-all shadow-inner">
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+        <button class="filter-chip px-3 py-1.5 text-xs rounded-lg transition-all bg-cyan-500 text-slate-950 font-bold" data-filter="ALL">All</button>
+        <button class="filter-chip px-3 py-1.5 text-xs rounded-lg transition-all bg-slate-800/80 text-slate-400 hover:text-white" data-filter="APPAREL">Apparel</button>
+        <button class="filter-chip px-3 py-1.5 text-xs rounded-lg transition-all bg-slate-800/80 text-slate-400 hover:text-white" data-filter="SUBSCRIPTIONS">Subscriptions</button>
+        <button class="filter-chip px-3 py-1.5 text-xs rounded-lg transition-all bg-slate-800/80 text-slate-400 hover:text-white" data-filter="ELECTRONICS">Electronics</button>
+        <button class="filter-chip px-3 py-1.5 text-xs rounded-lg transition-all bg-slate-800/80 text-slate-400 hover:text-white" data-filter="E-COMMERCE">E-Commerce</button>
+      </div>
+
+    </div>
+
+    <!-- Active Policies Grid -->
+    <div id="policies-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Injected by app.js -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-16 px-4 bg-slate-900/30 rounded-2xl border border-slate-800/80 mt-4">
+      <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <h3 class="text-sm font-bold text-white mb-1">No monitored policies match your filter</h3>
+      <p class="text-xs text-slate-400 max-w-sm mx-auto mb-4">Click "Track New Policy" or choose from the quick presets above.</p>
+      <button onclick="openAddModal()" class="px-4 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all">
+        + Track New Policy
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- FOOTER                                     -->
+  <!-- ========================================== -->
+  <footer class="border-t border-slate-800/80 bg-slate-950/90 py-6 px-4 sm:px-8 mt-12 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+        <span class="font-bold text-slate-300">ClaimKeeper</span>
+        <span>— Consumer policy versioning and evidence tool</span>
+      </div>
+      <div>Personal reference and dispute evidence documentation tool.</div>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ADD / TRACK NEW POLICY                            -->
+  <!-- ======================================================== -->
+  <div id="add-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white">Track New Policy or Terms</h3>
+        <button onclick="closeAddModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="add-policy-form" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Brand or Company Name *</label>
+          <input type="text" id="input-brand" required placeholder="e.g. Adidas, Nike, Netflix, Spotify..."
+                 class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Official Policy URL *</label>
+          <input type="url" id="input-url" required placeholder="https://brand.com/returns-or-terms"
+                 class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Policy Title / Label</label>
+            <input type="text" id="input-label" placeholder="e.g. Return & Refund Policy"
+                   class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+            <select id="input-category" class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl px-3 py-2 text-xs text-white outline-none">
+              <option value="Apparel">Apparel & Fashion</option>
+              <option value="Subscriptions">Subscriptions & SaaS</option>
+              <option value="Electronics">Electronics & Hardware</option>
+              <option value="E-Commerce">E-Commerce</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Current Policy Text (Optional)</label>
+          <textarea id="input-content" rows="4" placeholder="Paste the policy terms as displayed on the site..."
+                    class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded-xl p-3 text-xs text-white outline-none font-mono"></textarea>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white rounded-xl">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl">
+            Start Tracking
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: VERSION COMPARISON & DIFF VIEWER                  -->
+  <!-- ======================================================== -->
+  <div id="diff-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex items-start justify-between bg-slate-950/60">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-base font-bold text-white" id="diff-modal-title">Version Comparison</h3>
+            <a id="diff-official-link" href="#" target="_blank" rel="noopener noreferrer" 
+               class="text-xs text-cyan-400 hover:underline bg-cyan-950/80 border border-cyan-800/60 px-2 py-0.5 rounded-full">
+               Visit Brand ↗
+            </a>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5" id="diff-modal-subtitle"></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <button id="diff-mode-side" onclick="setDiffMode('side-by-side')" 
+                    class="px-3 py-1 text-xs font-semibold rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+              Side-by-Side
+            </button>
+            <button id="diff-mode-unified" onclick="setDiffMode('unified')" 
+                    class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white">
+              Inline
+            </button>
+          </div>
+          <button onclick="closeDiffModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1" id="diff-content-area"></div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: EVIDENCE REPORT & DISPUTE DOSSIER                 -->
+  <!-- ======================================================== -->
+  <div id="evidence-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/80 no-print">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+          <span class="text-xs uppercase font-mono tracking-wider font-bold text-white">Dispute Evidence Report</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="copyDisputeEmail()" 
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition-all flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span>Copy Dispute Email</span>
+          </button>
+
+          <button onclick="printEvidenceReport()" 
+                  class="px-4 py-1.5 text-xs font-bold rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span>Print / Save PDF</span>
+          </button>
+
+          <button onclick="closeEvidenceModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 print-only-container" id="printable-evidence-area"></div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: REMOVE POLICY CONFIRMATION                        -->
+  <!-- ======================================================== -->
+  <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+      <div class="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </div>
+
+      <h3 class="text-base font-bold text-white mb-1.5">Remove Monitored Policy?</h3>
+      <p class="text-xs text-slate-300 leading-relaxed mb-5" id="delete-modal-text"></p>
+
+      <div class="flex items-center justify-end gap-2.5">
+        <button onclick="closeDeleteModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl">
+          Cancel
+        </button>
+        <button onclick="confirmDeletePolicy()" class="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white rounded-xl">
+          Remove Policy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: RE-CHECK SIMULATOR                                -->
+  <!-- ======================================================== -->
+  <div id="recheck-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-white" id="recheck-modal-title">Re-check Policy</h3>
+          <p class="text-[11px] text-slate-400 truncate max-w-xs" id="recheck-modal-url"></p>
+        </div>
+        <button onclick="closeRecheckModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-2 mt-3">
+        <button onclick="triggerRecheck('stable')" 
+                class="w-full p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-left transition-all flex items-center justify-between">
+          <div class="text-xs font-semibold text-white">Routine Check (No Changes)</div>
+          <span class="text-[10px] text-emerald-400 font-mono">Parity</span>
+        </button>
+
+        <button onclick="triggerRecheck('modify')" 
+                class="w-full p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-left transition-all flex items-center justify-between">
+          <div class="text-xs font-semibold text-white">Simulate Retailer Update</div>
+          <span class="text-[10px] text-amber-400 font-mono">Diff</span>
+        </button>
+
+        <button onclick="triggerRecheck('failure')" 
+                class="w-full p-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-left transition-all flex items-center justify-between">
+          <div class="text-xs font-semibold text-white">Simulate 502 Network Error</div>
+          <span class="text-[10px] text-rose-400 font-mono">Safe</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
